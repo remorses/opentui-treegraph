@@ -1,14 +1,17 @@
 {
-  "name": "opentui-treegraph",
+  "name": "vite-treegraph",
   "version": "0.1.0",
   "description": "Interactive treemap visualization for the terminal using OpenTUI",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "bin": {
+    "vite-treegraph": "./src/bin.tsx"
+  },
   "scripts": {
-    "example": "bun run example.tsx",
-    "build": "rm -rf dist && tsc src/index.ts src/treeview.tsx --declaration --outDir dist --jsx react-jsx --jsxImportSource @opentui/react --skipLibCheck --moduleResolution bundler --module esnext --target esnext",
+    "example": "bun run --watch example.tsx",
+    "build": "rm -rf dist && tsc src/index.ts src/treeview.tsx src/plugin.ts --declaration --outDir dist --jsx react-jsx --jsxImportSource @opentui/react --skipLibCheck --moduleResolution bundler --module esnext --target esnext",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run build"
   },
@@ -18,11 +21,13 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/d3-hierarchy": "^3.1.7",
-    "@visx/hierarchy": "^3.12.0"
+    "@visx/hierarchy": "^3.12.0",
+    "glob": "^11.0.3",
+    "vite": "^7.1.9"
   },
   "peerDependencies": {
     "@opentui/react": "^0.1.25",
-    "react": "^19",
+    "react": "^19.2.0",
     "typescript": "^5"
   },
   "dependencies": {

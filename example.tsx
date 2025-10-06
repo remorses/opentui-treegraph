@@ -110,7 +110,10 @@ const schemeRed = [
 function App() {
   return (
     <Treemap
-      data={demoData}
+      nodes={[
+        { name: "default", data: demoData }, //
+        { name: "another", data: demoData }, //
+      ]}
       colorScheme={schemeRed}
       deletedColorScheme={schemeRed}
       formatValue={formatFileSize}

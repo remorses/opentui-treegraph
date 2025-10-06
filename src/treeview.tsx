@@ -20,6 +20,11 @@ export interface TreeNode {
   children?: TreeNode[];
 }
 
+export interface TreeNodeData {
+  name: string;
+  data: TreeNode;
+}
+
 interface TreemapContext {
   colorScale: (value: number) => string;
   deletedColorScale: (value: number) => string;
@@ -39,7 +44,7 @@ const context = createContext<TreemapContext>({
 });
 
 interface TreemapProps {
-  data: TreeNode;
+  nodes: TreeNodeData[];
   colorScheme: string[];
   deletedColorScheme: string[];
   formatValue?: (value: number) => string;
@@ -49,16 +54,19 @@ const paddingTop = 3;
 const paddingLeft = 1;
 
 export function Treemap({
-  data,
+  nodes,
   colorScheme,
   deletedColorScheme,
   formatValue,
 }: TreemapProps) {
   const { width, height } = useTerminalDimensions();
+  const [currentTab, setCurrentTab] = useState(0);
+
+  const data = nodes[currentTab]?.data || nodes[0]?.data;
 
   const node = useMemo(() => {
     let i = 0;
-    const hierarchyNode = hierarchy<TreeNode>(data)
+    const hierarchyNode = hierarchy<TreeNode>(data!)
       .sort((a, b) => (b.value || 0) - (a.value || 0))
       .sum((d) => d.value || 0)
       .each((x) => {
@@ -123,7 +131,15 @@ export function Treemap({
   const flatNodes = useMemo(() => treemapElem.descendants(), [treemapElem]);
 
   useKeyboard((key) => {
-    if (key.name === "up") {
+    if (key.name === "left") {
+      setCurrentTab((prev) => Math.max(0, prev - 1));
+      setZoomedNodeId(undefined);
+      setSelectedIndex(0);
+    } else if (key.name === "right") {
+      setCurrentTab((prev) => Math.min(nodes.length - 1, prev + 1));
+      setZoomedNodeId(undefined);
+      setSelectedIndex(0);
+    } else if (key.name === "up") {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.name === "down") {
       setSelectedIndex((prev) => Math.min(flatNodes.length - 1, prev + 1));
@@ -147,7 +163,7 @@ export function Treemap({
 
   const selectedNode = flatNodes[selectedIndex];
   const statusText = selectedNode
-    ? `${selectedNode.data.name} - ${formatValue ? formatValue(selectedNode.value || 0) : selectedNode.value || 0} | ↑↓: Navigate | Enter: Zoom | Esc: Back`
+    ? `${selectedNode.data.name} - ${formatValue ? formatValue(selectedNode.value || 0) : selectedNode.value || 0} `
     : "Use arrow keys to navigate";
 
   const handleNodeClick = (nodeId: number) => {
@@ -163,7 +179,7 @@ export function Treemap({
   };
 
   return (
-    <box padding={1} paddingTop={0}>
+    <box padding={1} flexDirection="column" paddingTop={0}>
       <context.Provider
         value={{
           colorScale,
@@ -174,8 +190,32 @@ export function Treemap({
           onNodeHover: handleNodeHover,
         }}
       >
-        <box style={{ height: 3, border: true }}>
-          <text>{statusText}</text>
+        <box
+          flexDirection="row"
+          gap={2}
+          alignItems="space-between"
+          paddingLeft={1}
+          flexGrow={1}
+          style={{ height: 3, border: true }}
+        >
+          <box style={{ flexDirection: "row", gap: 1 }}>
+            {nodes.map((nodeData, i) => (
+              <box
+                key={i}
+                style={{
+                  paddingLeft: 1,
+                  paddingRight: 1,
+
+                  backgroundColor: currentTab === i ? "#4a4a4a" : "transparent",
+                }}
+              >
+                <text>{nodeData.name}</text>
+              </box>
+            ))}
+          </box>
+          <box flexGrow={1}>
+            <text>{statusText}</text>
+          </box>
         </box>
 
         <box style={{ flexDirection: "column", width, height }}>
@@ -264,5 +304,3 @@ function MapNode({
     />
   );
 }
-
-

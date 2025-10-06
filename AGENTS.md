@@ -1,3 +1,5 @@
+this repo is for an opentui component that displays a treeview component and vite plugin that let you display the bundle of a vite app as a tree view, one graph for each environment of the app (or just 2 in case of normal vite app with ssr and client)
+
 ## opentui
 
 opentui is the framework used to render the tui, using react.
