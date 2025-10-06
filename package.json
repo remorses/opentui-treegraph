@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "example": "bun run example.tsx",
-    "build": "bun build src/index.ts --outdir dist --format esm --target=bun && tsc --declaration --emitDeclarationOnly --outDir dist --jsx react-jsx --jsxImportSource @opentui/react",
+    "build": "rm -rf dist && tsc src/index.ts src/treeview.tsx --declaration --outDir dist --jsx react-jsx --jsxImportSource @opentui/react --skipLibCheck --moduleResolution bundler --module esnext --target esnext",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run build"
   },
