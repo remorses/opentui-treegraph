@@ -46,6 +46,9 @@ interface TreemapProps {
   formatValue?: (value: number) => string;
 }
 
+const paddingTop = 3;
+const paddingLeft = 1;
+
 export function Treemap({
   data,
   colorScheme,
@@ -80,15 +83,16 @@ export function Treemap({
     return found || node;
   }, [node, zoomedNodeId]);
 
-  const xMax = width - margin.left - margin.right;
-  const yMax = height - margin.top - margin.bottom;
+  const xMax = width - margin.left - margin.right - paddingLeft * 2;
+  const yMax = height - margin.top - margin.bottom - paddingTop;
 
   const treemapElem = useMemo(() => {
     const treemap = d3treemap<TreeNode>()
       .tile(treemapBinary)
       .size([xMax, yMax])
-      .padding(1)
-      .paddingTop(2);
+      .padding(2)
+      .paddingTop(1)
+      .paddingBottom(1);
 
     return treemap(zoomedNode.copy());
   }, [zoomedNode, xMax, yMax]);
@@ -160,27 +164,30 @@ export function Treemap({
   };
 
   return (
-    <context.Provider
-      value={{
-        colorScale,
-        deletedColorScale,
-        selectedIndex,
-        hoveredIndex,
-        onNodeClick: handleNodeClick,
-        onNodeHover: handleNodeHover,
-      }}
-    >
-      <box style={{ flexDirection: "column", width, height }}>
-        <box style={{ position: "relative", flexGrow: 1 }}>
-          {flatNodes.map((node, i) => (
-            <MapNode node={node} i={i} />
-          ))}
-        </box>
-        <box style={{ height: 3, border: true, padding: 0 }}>
+    <box padding={1} paddingTop={0}>
+      <context.Provider
+        value={{
+          colorScale,
+          deletedColorScale,
+          selectedIndex,
+          hoveredIndex,
+          onNodeClick: handleNodeClick,
+          onNodeHover: handleNodeHover,
+        }}
+      >
+        <box style={{ height: 3, border: true }}>
           <text>{statusText}</text>
         </box>
-      </box>
-    </context.Provider>
+
+        <box style={{ flexDirection: "column", width, height }}>
+          <box style={{ position: "relative", flexGrow: 1 }}>
+            {flatNodes.map((node, i) => (
+              <MapNode node={node} i={i} />
+            ))}
+          </box>
+        </box>
+      </context.Provider>
+    </box>
   );
 }
 
@@ -191,7 +198,14 @@ function MapNode({
   node: HierarchyRectangularNode<TreeNode>;
   i: number;
 }) {
-  const { colorScale, deletedColorScale, selectedIndex, hoveredIndex, onNodeClick, onNodeHover } = useContext(context);
+  const {
+    colorScale,
+    deletedColorScale,
+    selectedIndex,
+    hoveredIndex,
+    onNodeClick,
+    onNodeHover,
+  } = useContext(context);
   const nodeWidth = Math.floor(node.x1 - node.x0);
   const nodeHeight = Math.floor(node.y1 - node.y0);
   const min = 2;
@@ -213,7 +227,7 @@ function MapNode({
   const isSelected = selectedIndex === i;
   const isHovered = hoveredIndex === i;
 
-  const displayColor = useMemo(() => {
+  const borderColor = useMemo(() => {
     if (isSelected) return "#ffffff";
     if (isHovered) {
       const color = colord(backgroundColor);
@@ -222,27 +236,22 @@ function MapNode({
     return backgroundColor;
   }, [backgroundColor, isSelected, isHovered]);
 
-  const textColor = useMemo(() => {
-    const color = colord(displayColor);
-    if (color.isLight()) {
-      return black;
-    }
-    return white;
-  }, [displayColor]);
-
   if (!nodeWidth || !nodeHeight || nodeWidth < min || nodeHeight < min) {
     return null;
   }
 
   return (
     <box
+      title={showText ? text : undefined}
       style={{
         position: "absolute",
-        top: Math.floor(node.y0) + margin.top,
-        left: Math.floor(node.x0) + margin.left,
+        top: Math.floor(node.y0) + margin.top + paddingTop,
+        left: Math.floor(node.x0) + margin.left + paddingLeft,
         width: nodeWidth,
         height: nodeHeight,
-        backgroundColor: displayColor,
+        border: true,
+        borderStyle: "single",
+        borderColor,
       }}
       onMouse={(event) => {
         if (event.type === "down" && node.data.id !== undefined) {
@@ -253,17 +262,7 @@ function MapNode({
           onNodeHover(-1);
         }
       }}
-    >
-      {showText && (
-        <text
-          style={{
-            fg: isSelected ? black : textColor,
-          }}
-        >
-          {text.slice(0, nodeWidth - 2)}
-        </text>
-      )}
-    </box>
+    />
   );
 }
 
