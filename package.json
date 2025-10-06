@@ -4,7 +4,9 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/d3-hierarchy": "^3.1.7",
+    "@visx/hierarchy": "^3.12.0"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -12,6 +14,9 @@
   "dependencies": {
     "@opentui/core": "^0.1.25",
     "@opentui/react": "^0.1.25",
+    "@visx/scale": "^3.12.0",
+    "colord": "^2.9.3",
+    "d3-hierarchy": "^3.1.2",
     "react": "^19.1.1"
   }
 }
