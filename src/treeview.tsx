@@ -25,12 +25,18 @@ interface TreemapContext {
   colorScale: (value: number) => string;
   deletedColorScale: (value: number) => string;
   selectedIndex: number;
+  hoveredIndex: number;
+  onNodeClick: (nodeId: number) => void;
+  onNodeHover: (index: number) => void;
 }
 
 const context = createContext<TreemapContext>({
   colorScale: () => "",
   deletedColorScale: () => "",
   selectedIndex: 0,
+  hoveredIndex: -1,
+  onNodeClick: () => {},
+  onNodeHover: () => {},
 });
 
 interface TreemapProps {
@@ -64,6 +70,7 @@ export function Treemap({
     node.data.id,
   );
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [hoveredIndex, setHoveredIndex] = useState(-1);
 
   const zoomedNode = useMemo(() => {
     if (zoomedNodeId === node.data.id) {
@@ -140,12 +147,27 @@ export function Treemap({
     ? `${selectedNode.data.name} - ${formatValue ? formatValue(selectedNode.value || 0) : selectedNode.value || 0} | ↑↓: Navigate | Enter: Zoom | Esc: Back`
     : "Use arrow keys to navigate";
 
+  const handleNodeClick = (nodeId: number) => {
+    const targetNode = node.descendants().find((n) => n.data.id === nodeId);
+    if (targetNode && targetNode.children) {
+      setZoomedNodeId(nodeId);
+      setSelectedIndex(0);
+    }
+  };
+
+  const handleNodeHover = (index: number) => {
+    setHoveredIndex(index);
+  };
+
   return (
     <context.Provider
       value={{
         colorScale,
         deletedColorScale,
         selectedIndex,
+        hoveredIndex,
+        onNodeClick: handleNodeClick,
+        onNodeHover: handleNodeHover,
       }}
     >
       <box style={{ flexDirection: "column", width, height }}>
@@ -169,7 +191,7 @@ function MapNode({
   node: HierarchyRectangularNode<TreeNode>;
   i: number;
 }) {
-  const { colorScale, deletedColorScale, selectedIndex } = useContext(context);
+  const { colorScale, deletedColorScale, selectedIndex, hoveredIndex, onNodeClick, onNodeHover } = useContext(context);
   const nodeWidth = Math.floor(node.x1 - node.x0);
   const nodeHeight = Math.floor(node.y1 - node.y0);
   const min = 2;
@@ -189,14 +211,24 @@ function MapNode({
 
   const backgroundColor = getBg(node);
   const isSelected = selectedIndex === i;
+  const isHovered = hoveredIndex === i;
+
+  const displayColor = useMemo(() => {
+    if (isSelected) return "#ffffff";
+    if (isHovered) {
+      const color = colord(backgroundColor);
+      return color.lighten(0.2).toHex();
+    }
+    return backgroundColor;
+  }, [backgroundColor, isSelected, isHovered]);
 
   const textColor = useMemo(() => {
-    const color = colord(backgroundColor);
+    const color = colord(displayColor);
     if (color.isLight()) {
       return black;
     }
     return white;
-  }, [backgroundColor]);
+  }, [displayColor]);
 
   if (!nodeWidth || !nodeHeight || nodeWidth < min || nodeHeight < min) {
     return null;
@@ -210,7 +242,16 @@ function MapNode({
         left: Math.floor(node.x0) + margin.left,
         width: nodeWidth,
         height: nodeHeight,
-        backgroundColor: isSelected ? "#ffffff" : backgroundColor,
+        backgroundColor: displayColor,
+      }}
+      onMouse={(event) => {
+        if (event.type === "down" && node.data.id !== undefined) {
+          onNodeClick(node.data.id);
+        } else if (event.type === "move" || event.type === "over") {
+          onNodeHover(i);
+        } else if (event.type === "out") {
+          onNodeHover(-1);
+        }
       }}
     >
       {showText && (
