@@ -9,33 +9,10 @@ import React from "react";
 
 const margin = { top: 0, left: 0, right: 0, bottom: 0 };
 
-const scheme = [
-  "#1f77b4",
-  "#ff7f0e",
-  "#2ca02c",
-  "#d62728",
-  "#9467bd",
-  "#8c564b",
-  "#e377c2",
-  "#7f7f7f",
-  "#bcbd22",
-  "#17becf",
-];
-
-const schemeRed = [
-  "#fee5d9",
-  "#fcbba1",
-  "#fc9272",
-  "#fb6a4a",
-  "#ef3b2c",
-  "#cb181d",
-  "#99000d",
-];
-
 const white = "#fff";
 const black = "#444";
 
-interface TreeNode {
+export interface TreeNode {
   name: string;
   value?: number;
   layer?: number;
@@ -44,16 +21,11 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-interface Layer {
-  command: string;
-}
-
 interface TreemapContext {
   zoomedNode: HierarchyNode<TreeNode>;
   setZoomedNode: (node: HierarchyNode<TreeNode>) => void;
   colorScale: (value: number) => string;
   deletedColorScale: (value: number) => string;
-  layers: Layer[];
   selectedIndex: number;
   setSelectedIndex: (i: number) => void;
 }
@@ -63,72 +35,28 @@ const context = createContext<TreemapContext>({
   setZoomedNode: () => {},
   colorScale: () => "",
   deletedColorScale: () => "",
-  layers: [],
   selectedIndex: 0,
   setSelectedIndex: () => {},
 });
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + " B";
-  const kb = bytes / 1024;
-  if (kb < 1024) return kb.toFixed(1) + " KB";
-  const mb = kb / 1024;
-  if (mb < 1024) return mb.toFixed(1) + " MB";
-  return (mb / 1024).toFixed(1) + " GB";
+interface TreemapProps {
+  data: TreeNode;
+  colorScheme: string[];
+  deletedColorScheme: string[];
+  formatValue?: (value: number) => string;
 }
 
-const demoData: TreeNode = {
-  name: "root",
-  value: 0,
-  children: [
-    {
-      name: "src",
-      value: 0,
-      layer: 0,
-      children: [
-        { name: "index.ts", value: 1500, layer: 1 },
-        { name: "utils.ts", value: 800, layer: 1 },
-        { name: "components.tsx", value: 2400, layer: 1 },
-      ],
-    },
-    {
-      name: "node_modules",
-      value: 0,
-      layer: 0,
-      children: [
-        { name: "react", value: 5000, layer: 2 },
-        { name: "lodash", value: 3200, layer: 2 },
-        { name: "typescript", value: 8500, layer: 2 },
-      ],
-    },
-    {
-      name: "dist",
-      value: 0,
-      layer: 0,
-      children: [
-        { name: "bundle.js", value: 12000, layer: 3 },
-        { name: "bundle.css", value: 400, layer: 3 },
-      ],
-    },
-  ],
-};
-
-export function TreemapDemo() {
+export function Treemap({
+  data,
+  colorScheme,
+  deletedColorScheme,
+  formatValue,
+}: TreemapProps) {
   const { width, height } = useTerminalDimensions();
-
-  const layers = useMemo(
-    () => [
-      { command: "layer 0" },
-      { command: "layer 1" },
-      { command: "layer 2" },
-      { command: "layer 3" },
-    ],
-    [],
-  );
 
   const node = useMemo(() => {
     let i = 0;
-    const hierarchyNode = hierarchy<TreeNode>(demoData)
+    const hierarchyNode = hierarchy<TreeNode>(data)
       .sort((a, b) => (b.value || 0) - (a.value || 0))
       .sum((d) => d.value || 0)
       .each((x) => {
@@ -136,7 +64,7 @@ export function TreemapDemo() {
         x.data.id = i;
       });
     return hierarchyNode;
-  }, []);
+  }, [data]);
 
   const [zoomedNode, setZoomedNode] = useState(node);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -154,24 +82,28 @@ export function TreemapDemo() {
     return treemap(zoomedNode);
   }, [zoomedNode, xMax, yMax]);
 
-  const step = Math.ceil(scheme.length / layers.length);
+  const maxLayer = useMemo(() => {
+    return Math.max(...node.descendants().map((n) => n.data.layer || 0));
+  }, [node]);
+
+  const step = Math.ceil(colorScheme.length / (maxLayer + 1));
 
   const colorScale = useMemo(
     () =>
       scaleOrdinal({
-        domain: layers.map((_l, i) => i),
-        range: schemeRed.filter((_c, i) => i % step === 0),
+        domain: Array.from({ length: maxLayer + 1 }, (_l, i) => i),
+        range: colorScheme.filter((_c, i) => i % step === 0),
       }),
-    [layers.length, step],
+    [maxLayer, step, colorScheme],
   );
 
   const deletedColorScale = useMemo(
     () =>
       scaleOrdinal({
-        domain: layers.map((_l, i) => i),
-        range: schemeRed.filter((_c, i) => i % step === 0),
+        domain: Array.from({ length: maxLayer + 1 }, (_l, i) => i),
+        range: deletedColorScheme.filter((_c, i) => i % step === 0),
       }),
-    [layers.length, step],
+    [maxLayer, step, deletedColorScheme],
   );
 
   const flatNodes = useMemo(() => treemapElem.descendants(), [treemapElem]);
@@ -199,11 +131,15 @@ export function TreemapDemo() {
     return null;
   }
 
+  const selectedNode = flatNodes[selectedIndex];
+  const statusText = selectedNode
+    ? `${selectedNode.data.name} - ${formatValue ? formatValue(selectedNode.value || 0) : selectedNode.value || 0} | ↑↓: Navigate | Enter: Zoom | Esc: Back`
+    : "Use arrow keys to navigate";
+
   return (
     <context.Provider
       value={{
         zoomedNode,
-        layers,
         setZoomedNode,
         colorScale,
         deletedColorScale,
@@ -218,11 +154,7 @@ export function TreemapDemo() {
           ))}
         </box>
         <box style={{ height: 3, border: true, padding: 0 }}>
-          <text>
-            {selectedIndex < flatNodes.length && flatNodes[selectedIndex]
-              ? `${flatNodes[selectedIndex]!.data.name} - ${formatFileSize(flatNodes[selectedIndex]!.value || 0)} | ↑↓: Navigate | Enter: Zoom | Esc: Back`
-              : "Use arrow keys to navigate"}
-          </text>
+          <text>{statusText}</text>
         </box>
       </box>
     </context.Provider>
@@ -356,8 +288,70 @@ class ErrorBoundary extends React.Component<
   }
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  const kb = bytes / 1024;
+  if (kb < 1024) return kb.toFixed(1) + " KB";
+  const mb = kb / 1024;
+  if (mb < 1024) return mb.toFixed(1) + " MB";
+  return (mb / 1024).toFixed(1) + " GB";
+}
+
+const demoData: TreeNode = {
+  name: "root",
+  value: 0,
+  children: [
+    {
+      name: "src",
+      value: 0,
+      layer: 0,
+      children: [
+        { name: "index.ts", value: 1500, layer: 1 },
+        { name: "utils.ts", value: 800, layer: 1 },
+        { name: "components.tsx", value: 2400, layer: 1 },
+      ],
+    },
+    {
+      name: "node_modules",
+      value: 0,
+      layer: 0,
+      children: [
+        { name: "react", value: 5000, layer: 2 },
+        { name: "lodash", value: 3200, layer: 2 },
+        { name: "typescript", value: 8500, layer: 2 },
+      ],
+    },
+    {
+      name: "dist",
+      value: 0,
+      layer: 0,
+      children: [
+        { name: "bundle.js", value: 12000, layer: 3 },
+        { name: "bundle.css", value: 400, layer: 3 },
+      ],
+    },
+  ],
+};
+
+const schemeRed = [
+  "#fee5d9",
+  "#fcbba1",
+  "#fc9272",
+  "#fb6a4a",
+  "#ef3b2c",
+  "#cb181d",
+  "#99000d",
+];
+
 function App() {
-  return <TreemapDemo />;
+  return (
+    <Treemap
+      data={demoData}
+      colorScheme={schemeRed}
+      deletedColorScheme={schemeRed}
+      formatValue={formatFileSize}
+    />
+  );
 }
 
 await render(
