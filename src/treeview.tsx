@@ -22,21 +22,15 @@ export interface TreeNode {
 }
 
 interface TreemapContext {
-  zoomedNode: HierarchyNode<TreeNode>;
-  setZoomedNode: (node: HierarchyNode<TreeNode>) => void;
   colorScale: (value: number) => string;
   deletedColorScale: (value: number) => string;
   selectedIndex: number;
-  setSelectedIndex: (i: number) => void;
 }
 
 const context = createContext<TreemapContext>({
-  zoomedNode: {} as HierarchyNode<TreeNode>,
-  setZoomedNode: () => {},
   colorScale: () => "",
   deletedColorScale: () => "",
   selectedIndex: 0,
-  setSelectedIndex: () => {},
 });
 
 interface TreemapProps {
@@ -66,8 +60,18 @@ export function Treemap({
     return hierarchyNode;
   }, [data]);
 
-  const [zoomedNode, setZoomedNode] = useState(node);
+  const [zoomedNodeId, setZoomedNodeId] = useState<number | undefined>(
+    node.data.id,
+  );
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const zoomedNode = useMemo(() => {
+    if (zoomedNodeId === node.data.id) {
+      return node;
+    }
+    const found = node.descendants().find((n) => n.data.id === zoomedNodeId);
+    return found || node;
+  }, [node, zoomedNodeId]);
 
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
@@ -79,7 +83,7 @@ export function Treemap({
       .padding(1)
       .paddingTop(2);
 
-    return treemap(zoomedNode);
+    return treemap(zoomedNode.copy());
   }, [zoomedNode, xMax, yMax]);
 
   const maxLayer = useMemo(() => {
@@ -116,12 +120,12 @@ export function Treemap({
     } else if (key.name === "return") {
       const selected = flatNodes[selectedIndex];
       if (selected && selected.children) {
-        setZoomedNode(selected);
+        setZoomedNodeId(selected.data.id);
         setSelectedIndex(0);
       }
     } else if (key.name === "escape" || key.name === "backspace") {
       if (zoomedNode.parent) {
-        setZoomedNode(zoomedNode.parent);
+        setZoomedNodeId(zoomedNode.parent.data.id);
         setSelectedIndex(0);
       }
     }
@@ -139,12 +143,9 @@ export function Treemap({
   return (
     <context.Provider
       value={{
-        zoomedNode,
-        setZoomedNode,
         colorScale,
         deletedColorScale,
         selectedIndex,
-        setSelectedIndex,
       }}
     >
       <box style={{ flexDirection: "column", width, height }}>
