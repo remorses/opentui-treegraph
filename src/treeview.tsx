@@ -117,7 +117,6 @@ const demoData: TreeNode = {
 
 export function TreemapDemo() {
   const { width, height } = useTerminalDimensions();
-  const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
 
   const layers = useMemo(
     () => [
@@ -170,7 +169,7 @@ export function TreemapDemo() {
     () =>
       scaleOrdinal({
         domain: layers.map((_l, i) => i),
-        range: scheme.filter((_c, i) => i % step === 0),
+        range: schemeRed.filter((_c, i) => i % step === 0),
       }),
     [layers.length, step],
   );
@@ -289,8 +288,6 @@ function MapNode({
         width: nodeWidth,
         height: nodeHeight,
         backgroundColor: isSelected ? "#ffffff" : backgroundColor,
-        border: isSelected,
-        borderColor: "#00ff00",
       }}
     >
       {showText && (
