@@ -1,5 +1,5 @@
 import { colord } from "colord";
-import { scaleOrdinal, scaleSqrt } from "@visx/scale";
+import { scaleOrdinal } from "@visx/scale";
 import { treemapBinary } from "@visx/hierarchy";
 import type { HierarchyNode, HierarchyRectangularNode } from "d3-hierarchy";
 import { treemap as d3treemap, hierarchy } from "d3-hierarchy";
@@ -54,7 +54,6 @@ interface TreemapContext {
   colorScale: (value: number) => string;
   deletedColorScale: (value: number) => string;
   layers: Layer[];
-  fontScale: (value: number) => number;
   selectedIndex: number;
   setSelectedIndex: (i: number) => void;
 }
@@ -65,7 +64,6 @@ const context = createContext<TreemapContext>({
   colorScale: () => "",
   deletedColorScale: () => "",
   layers: [],
-  fontScale: () => 0,
   selectedIndex: 0,
   setSelectedIndex: () => {},
 });
@@ -143,25 +141,18 @@ export function TreemapDemo() {
   const [zoomedNode, setZoomedNode] = useState(node);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const xMax = width - margin.left - margin.right - 2;
-  const yMax = height - margin.top - margin.bottom - 2;
-
-  const fontScale = useMemo(() => {
-    const nodes = node.descendants().map((x) => x.value || 0);
-    return scaleSqrt<number>()
-      .domain([Math.min(...nodes), Math.max(...nodes)])
-      .range([1, 3]);
-  }, [node]);
+  const xMax = width - margin.left - margin.right;
+  const yMax = height - margin.top - margin.bottom;
 
   const treemapElem = useMemo(() => {
     const treemap = d3treemap<TreeNode>()
       .tile(treemapBinary)
       .size([xMax, yMax])
       .padding(1)
-      .paddingTop((x) => fontScale(x.value || 0) + 1);
+      .paddingTop(2);
 
     return treemap(zoomedNode);
-  }, [zoomedNode, xMax, yMax, fontScale]);
+  }, [zoomedNode, xMax, yMax]);
 
   const step = Math.ceil(scheme.length / layers.length);
 
@@ -216,7 +207,6 @@ export function TreemapDemo() {
         setZoomedNode,
         colorScale,
         deletedColorScale,
-        fontScale,
         selectedIndex,
         setSelectedIndex,
       }}
