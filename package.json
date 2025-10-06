@@ -1,22 +1,33 @@
 {
-  "name": "my-opentui-project",
-  "module": "src/index.tsx",
+  "name": "opentui-treegraph",
+  "version": "0.1.0",
+  "description": "Interactive treemap visualization for the terminal using OpenTUI",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
-  "private": true,
+  "scripts": {
+    "example": "bun run example.tsx",
+    "build": "bun build src/index.ts --outdir dist --format esm --target=bun && tsc --declaration --emitDeclarationOnly --outDir dist --jsx react-jsx --jsxImportSource @opentui/react",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
+  },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "@types/d3-hierarchy": "^3.1.7",
     "@visx/hierarchy": "^3.12.0"
   },
   "peerDependencies": {
+    "@opentui/react": "^0.1.25",
+    "react": "^19",
     "typescript": "^5"
   },
   "dependencies": {
-    "@opentui/core": "^0.1.25",
-    "@opentui/react": "^0.1.25",
     "@visx/scale": "^3.12.0",
     "colord": "^2.9.3",
-    "d3-hierarchy": "^3.1.2",
-    "react": "^19.1.1"
+    "d3-hierarchy": "^3.1.2"
   }
 }
