@@ -205,8 +205,14 @@ export function Treemap({
                 style={{
                   paddingLeft: 1,
                   paddingRight: 1,
-
                   backgroundColor: currentTab === i ? "#4a4a4a" : "transparent",
+                }}
+                onMouse={(event) => {
+                  if (event.type === "down") {
+                    setCurrentTab(i);
+                    setZoomedNodeId(undefined);
+                    setSelectedIndex(0);
+                  }
                 }}
               >
                 <text>{nodeData.name}</text>
