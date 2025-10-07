@@ -72,7 +72,9 @@ function buildTreeFromDependencies(deps: DependencyEdge[]): TreeNode {
     const children = childrenMap.get(id);
     if (children) {
       const node = nodeMap.get(id)!;
-      node.children = Array.from(children).map((childId) => nodeMap.get(childId)!);
+      node.children = Array.from(children).map(
+        (childId) => nodeMap.get(childId)!,
+      );
     }
 
     if (roots.has(id)) {
@@ -84,26 +86,23 @@ function buildTreeFromDependencies(deps: DependencyEdge[]): TreeNode {
     name: "root",
     value: 0,
     layer: 0,
-    children: rootChildren.length > 0 ? rootChildren : Array.from(nodeMap.values()),
+    children:
+      rootChildren.length > 0 ? rootChildren : Array.from(nodeMap.values()),
   };
 }
 
 async function findGraphFiles(): Promise<string[]> {
-  const distDir = path.join(process.cwd(), "dist");
-
-  if (!fs.existsSync(distDir)) {
-    console.error("Dist directory not found. Run your vite build first.");
-    process.exit(1);
-  }
-
-  const files = await glob("treeview-*.json", { cwd: distDir });
+  const files = await glob("*-treeview.json", {
+    ignore: ["node_modules/**", ".git/**"],
+    absolute: true,
+  });
 
   if (files.length === 0) {
     console.error("No treeview-*.json graph files found in dist directory.");
     process.exit(1);
   }
 
-  return files.map((f) => path.join(distDir, f));
+  return files;
 }
 
 const schemeRed = [

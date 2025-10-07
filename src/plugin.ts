@@ -8,14 +8,12 @@ interface DependencyEdge {
 }
 
 export function treegraphPlugin(): Plugin {
-  let buildOutDir = "dist";
   let isFirstEnvironment = true;
 
   return {
     name: "vite-treegraph",
-    configResolved(config) {
-      buildOutDir = config.build.outDir;
-    },
+    enforce: "post",
+
     buildEnd() {
       const deps: DependencyEdge[] = [];
       for (const id of this.getModuleIds()) {
@@ -29,8 +27,8 @@ export function treegraphPlugin(): Plugin {
 
       const environmentName = this.environment?.name || "default";
       const outputPath = path.join(
-        buildOutDir,
-        `treeview-${environmentName}.json`,
+        this.environment.config.build.outDir,
+        `${environmentName}-treeview.json`,
       );
 
       const outputDir = path.dirname(outputPath);
