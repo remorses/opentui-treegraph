@@ -1,7 +1,7 @@
-#!/usr/bin/env bun
+#!/usr/bin/env bun --install=fallback
 import { render } from "@opentui/react";
 import React from "react";
-import { Treemap, type TreeNode, type TreeNodeData } from "./index";
+import { Treemap, type TreeNode, type TreeNodeData } from "./treeview";
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";

@@ -1,6 +1,6 @@
 import { render } from "@opentui/react";
 import React from "react";
-import { Treemap, type TreeNode } from "./src/index";
+import { Treemap, type TreeNode } from "./treeview.js";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },

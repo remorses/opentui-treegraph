@@ -8,9 +8,6 @@ import { useTerminalDimensions, useKeyboard } from "@opentui/react";
 
 const margin = { top: 0, left: 0, right: 0, bottom: 0 };
 
-const white = "#fff";
-const black = "#444";
-
 export interface TreeNode {
   name: string;
   value?: number;

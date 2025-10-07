@@ -9,6 +9,7 @@ interface DependencyEdge {
 
 export function treegraphPlugin(): Plugin {
   let buildOutDir = "dist";
+  let isFirstEnvironment = true;
 
   return {
     name: "vite-treegraph",
@@ -27,7 +28,10 @@ export function treegraphPlugin(): Plugin {
       }
 
       const environmentName = this.environment?.name || "default";
-      const outputPath = path.join(buildOutDir, `treeview-${environmentName}.json`);
+      const outputPath = path.join(
+        buildOutDir,
+        `treeview-${environmentName}.json`,
+      );
 
       const outputDir = path.dirname(outputPath);
       if (!fs.existsSync(outputDir)) {
@@ -36,7 +40,16 @@ export function treegraphPlugin(): Plugin {
 
       fs.writeFileSync(outputPath, JSON.stringify(deps, null, 2));
 
-      console.log(`[vite-treegraph] Generated graph for ${environmentName} environment at ${outputPath}`);
+      console.log(
+        `[vite-treegraph] Generated graph for ${environmentName} environment at ${outputPath}`,
+      );
+
+      if (isFirstEnvironment) {
+        console.log(
+          `[vite-treegraph] Run 'bun vite-treegraph' to visualize the dependency tree`,
+        );
+        isFirstEnvironment = false;
+      }
     },
   };
 }
