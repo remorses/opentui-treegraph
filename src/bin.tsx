@@ -1,5 +1,6 @@
 #!/usr/bin/env bun --install=fallback
-import { render } from "@opentui/react";
+import { createCliRenderer } from "@opentui/core";
+import { createRoot } from "@opentui/react";
 import React from "react";
 import { Treemap, type TreeNode, type TreeNodeData } from "./treeview";
 import fs from "fs";
@@ -145,7 +146,8 @@ async function main() {
     );
   }
 
-  await render(React.createElement(App));
+  const renderer = await createCliRenderer();
+  createRoot(renderer).render(React.createElement(App));
 }
 
 main();

@@ -1,4 +1,5 @@
-import { render } from "@opentui/react";
+import { createCliRenderer } from "@opentui/core";
+import { createRoot } from "@opentui/react";
 import React from "react";
 import { Treemap, type TreeNode } from "./treeview.js";
 
@@ -121,6 +122,7 @@ function App() {
   );
 }
 
-await render(
+const renderer = await createCliRenderer();
+createRoot(renderer).render(
   React.createElement(ErrorBoundary, null, React.createElement(App)),
 );
